@@ -1,0 +1,16 @@
+.livecell {
+  background-color: black;
+}
+
+.deadcell {
+  background-color: white;
+}
+
+.visiteddeadcell {
+  background-color: #B8CFD8;
+}
+
+.celltable {
+  width: 500px;
+  height: 500px;
+}
