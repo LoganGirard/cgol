@@ -1,5 +1,5 @@
-var tableLength = 50;
-var tableHeight = 50;
+var tableLength = 20;
+var tableHeight = 20;
 
 
 //classic default game values
@@ -17,44 +17,39 @@ var cellIsAlive = Create2DArray(tableHeight, tableLength);
 $(document).ready(function(){
 
   //intialize state and cells
-  for(var j=0; j<tableHeight; j++){
-    $(".celltable").append("<tr id="+"row"+j+"></tr>");
+  resizeTable(tableLength, tableHeight);
 
-    for(var i=0; i<tableLength; i++){
-      var id = j+'-'+i;
+  $("#resizeTableButton").click( function() {
+    resizeTable($("#tableLengthForm").val(), $("#tableHeightForm").val());
+  });
 
-      $("#row"+j).append("<td class='deadcell' id="+id+"></td>");
-
-      $("#"+id).click(function(){
-        var i = getRowNum(this);
-        var j = getColumnNum(this);
-
-        if( $(this).hasClass("deadcell")){
-          $(this).attr("class", "livecell");
-          cellIsAlive[j][i] = true;
-        } else {
-          $(this).attr("class", "visiteddeadcell");
-          cellIsAlive[j][i] = false;
-        }
-      });
-    }
-
-  };
+  $("#setGameRulesButton").click(function() {
+    setNeighborRadius($("#radiusForm").val() || neighborRadius);
+    setLoneliness($("#lonelinessForm").val() || lonelinessThreshold);
+    setOverpopulation($("#overpopulationForm").val() || overpopulation);
+    setGmin($("#gminForm").val() || gmin);
+    setGmax($("#gmaxForm").val() || gmax);
+  })
 });
 
 var isStepping = false;
 var continuousStepping;
+var steppingInterval = 200;
 
 var stepContinuous = function() {
   isStepping = !isStepping;
   if(!isStepping){
     clearInterval(continuousStepping);
   } else{
-    continuousStepping = setInterval(stepOnce, 200);
+    continuousStepping = setInterval(stepOnce, steppingInterval);
   }
 }
 
-
+var stepOnceOnly = function() {
+  if(!isStepping){
+    stepOnce();
+  }
+}
 
 var stepOnce = function() {
   var changeStack = [];
@@ -171,4 +166,118 @@ function getColumnNum(cell){
 
 function getRowNum(cell){
   return parseInt(cell.id.split('-')[1]);
+}
+
+function setNeighborRadius(inputRadius) {
+  if(inputRadius >= 1 && inputRadius <= 10){
+    neighborRadius = inputRadius;
+  } else {
+    alert("Radius must be within 1 and 10");
+  }
+}
+
+function setLoneliness(inputLoneliness){
+  if(inputLoneliness > 0 && inputLoneliness <= overpopulation){
+    lonelinessThreshold = inputLoneliness;
+  } else {
+    alert("Invalid loneliness threshold");
+  }
+}
+
+function setOverpopulation(inputOverpopulation) {
+  var magicNumber = 4*neighborRadius*neighborRadius + 4*neighborRadius;
+  if(inputOverpopulation >= lonelinessThreshold && inputOverpopulation < magicNumber ){
+    overpopulation = inputOverpopulation;
+  } else {
+    alert("Invalid overpopulation threshold");
+  }
+}
+
+function setGmin(inputGmin){
+
+  if(inputGmin > 0 && inputGmin <= gmax){
+    gmin = inputGmin;
+  } else {
+    alert("Invalid gmin");
+  }
+}
+
+function setGmax(inputGmax){
+  var magicNumber = 4*neighborRadius*neighborRadius + 4*neighborRadius;
+  if(inputGmax >= gmin && inputGmax < magicNumber) {
+    gmax = inputGmax;
+  } else {
+    alert("Invalid gmax");
+  }
+}
+
+function resetGame(){
+  neighborRadius = 1;
+  lonelinessThreshold = 2;
+  overpopulation = 3;
+  gmin = 3;
+  gmax = 3;
+}
+
+function clearTable(){
+  for(var j=0; j<tableHeight; j++){
+    for(var i=0; i<tableLength; i++){
+      var id = j+'-'+i;
+      $("#"+id).attr("class", "deadcell");
+    }
+  }
+}
+
+function fillRandom(){
+  for(var j=0; j<tableHeight; j++){
+    for(var i=0; i<tableLength; i++){
+      var randNum = Math.random();
+      var id = j+'-'+i;
+      if(randNum <= 0.15){
+        $("#"+id).attr("class", "livecell");
+        cellIsAlive[j][i] = true;
+      }else{
+        $("#"+id).attr("class", "deadcell");
+        cellIsAlive[j][i] = false;
+      }
+    }
+  }
+}
+
+function resizeTable(row, column){
+  $(".celltable").empty();
+  tableHeight = column;
+  tableLength = row;
+
+  for(var j=0; j<tableHeight; j++){
+    $(".celltable").append("<tr id="+"row"+j+"></tr>");
+
+    for(var i=0; i<tableLength; i++){
+      var id = j+'-'+i;
+
+      $("#row"+j).append("<td class='deadcell' id="+id+"></td>");
+
+      $("#"+id).click(function(){
+        if(!isStepping){
+          var i = getRowNum(this);
+          var j = getColumnNum(this);
+
+          if( $(this).hasClass("deadcell") || $(this).hasClass("visiteddeadcell")){
+            $(this).attr("class", "livecell");
+            cellIsAlive[j][i] = true;
+          } else {
+            $(this).attr("class", "visiteddeadcell");
+            cellIsAlive[j][i] = false;
+          }
+        }
+      });
+    }
+
+  };
+}
+
+function updateStepInterval(range){
+
+  steppingInterval = range.value;
+
 }

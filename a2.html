@@ -11,8 +11,29 @@
 
 <body>
   <table border="1" class="celltable"></table>
-  <button id="stepButton" onClick="stepOnce()">Step</button>
+  <button id="stepButton" onClick="stepOnceOnly()">Step</button>
   <button id="startButton" onClick="stepContinuous()">Start/Stop</button>
-  <button id="clearButton" onClick="clearGrid()">Clear</button>
+  <button id="clearButton" onClick="clearTable()">Clear</button>
+  <button id="fillRandomButton" onClick="fillRandom()">Fill Random</button>
+
+  <form id="tableform">
+    Table Height:<br>
+    <input type="number" id="tableHeightForm" placeholder="20">
+    <br>
+    Table Length:<br>
+    <input type="number" id="tableLengthForm" placeholder="20">
+  </form>
+  <button id="resizeTableButton">Resize</button>
+
+  <form id="gamerulesform">
+    <input type="number" id="radiusForm" placeholder="Neighbor Radius">
+    <input type="number" id="lonelinessForm" placeholder="Loneliness">
+    <input type="number" id="overpopulationForm" placeholder="Overpopulation">
+    <input type="number" id="gminForm" placeholder="Gmin">
+    <input type="number" id="gmaxForm" placeholder="Gmax">
+  </form>
+  <button id="setGameRulesButton">Set</button><br>
+  <p>Interval Speed</p>
+  <input id="steppingIntervalSlider" type="range" max="1000" min="0" onchange="updateStepInterval(this)"></input>
 </body>
 </html>
