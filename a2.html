@@ -35,9 +35,10 @@
   <button id="setGameRulesButton">Set</button><br>
   <p>Interval Speed</p>
   <input id="steppingIntervalSlider" type="range" max="1000" min="0" onchange="updateStepInterval(this)"></input>
-  <select onchange="updateToroidal(this)">
-    <option value="false">Non-Toroidal</option>
-    <option value="true">Toroidal</option>
+  <select onchange="updateBorderRule(this)">
+    <option value="dead">Always Dead</option>
+    <option value="alive">Always Alive</option>
+    <option value="toroidal">Toroidal</option>
   </select>
 </body>
 </html>

@@ -8,7 +8,10 @@ var lonelinessThreshold = 2;
 var overpopulation = 3;
 var gmin = 3;
 var gmax = 3;
+
 var isToroidal = false;
+var bordersAlive = false;
+var bordersDead = true;
 
 var continueStepping = false;
 
@@ -26,7 +29,7 @@ $(document).ready(function(){
   });
 
   $("#setGameRulesButton").click(function() {
-    setNeighborRadius($("#radiusForm").val() || neighborRadius);
+    setNeighborRadius(parseInt($("#radiusForm").val()) || neighborRadius);
     setLoneliness($("#lonelinessForm").val() || lonelinessThreshold);
     setOverpopulation($("#overpopulationForm").val() || overpopulation);
     setGmin($("#gminForm").val() || gmin);
@@ -122,49 +125,72 @@ var countAliveNeighbors = function(j, i) {
   var thisPosY = j;
   var thisPosX = i;
 
+
   var MIN_X = 0;
   var MIN_Y = 0;
   var MAX_X = tableLength-1;
   var MAX_Y = tableHeight-1;
 
-  var tempRadius = neighborRadius;
-  while(thisPosX - tempRadius < MIN_X){
-    tempRadius--;
-  }
-  var startPosX = thisPosX - tempRadius;
+  if(bordersDead){
+      var tempRadius = neighborRadius;
+      while(thisPosX - tempRadius < MIN_X){
+        tempRadius--;
+      }
+      var startPosX = thisPosX - tempRadius;
 
-  tempRadius = neighborRadius;
-  while(thisPosY - tempRadius < MIN_Y){
-    tempRadius--;
-  }
-  var startPosY = thisPosY - tempRadius;
+      tempRadius = neighborRadius;
+      while(thisPosY - tempRadius < MIN_Y){
+        tempRadius--;
+      }
+      var startPosY = thisPosY - tempRadius;
 
-  tempRadius = neighborRadius;
-  while(thisPosX + tempRadius > MAX_X){
-    tempRadius--;
-  }
-  var endPosX = thisPosX + tempRadius;
+      tempRadius = neighborRadius;
+      while(thisPosX + tempRadius > MAX_X){
+        tempRadius--;
+      }
+      var endPosX = thisPosX + tempRadius;
 
-  tempRadius = neighborRadius;
-  while(thisPosY + tempRadius > MAX_Y){
-    tempRadius--;
-  }
-  var endPosY = thisPosY + tempRadius;
+      tempRadius = neighborRadius;
+      while(thisPosY + tempRadius > MAX_Y){
+        tempRadius--;
+      }
+      var endPosY = thisPosY + tempRadius;
 
-console.log("%d, %d, %d, %d", startPosX, startPosY, endPosX, endPosY);
-  var aliveCount = 0;
-for (var colNum=startPosY; colNum<=endPosY; colNum++) {
-  for (var rowNum=startPosX; rowNum<=endPosX; rowNum++) {
-        // All the neighbors will be grid[rowNum][colNum]
-        if(cellIsAlive[colNum][rowNum]){
-          if(rowNum != thisPosX || colNum != thisPosY){
-            aliveCount++;
-          }
+    console.log("%d, %d, %d, %d", startPosX, startPosY, endPosX, endPosY);
+
+      var aliveCount = 0;
+    for (var colNum=startPosY; colNum<=endPosY; colNum++) {
+      for (var rowNum=startPosX; rowNum<=endPosX; rowNum++) {
+            // All the neighbors will be grid[rowNum][colNum]
+            if(cellIsAlive[colNum][rowNum]){
+              if(rowNum != thisPosX || colNum != thisPosY){
+                aliveCount++;
+              }
+            }
         }
     }
-}
-  return aliveCount;
+      return aliveCount;
+  } else if(isToroidal){
+    startPosX = thisPosX - neighborRadius;
+    startPosY = thisPosY - neighborRadius;
+    endPosY = thisPosY + neighborRadius;
+    endPosX = thisPosX + neighborRadius;
 
+    var aliveCount = 0;
+  for (var colNum=startPosY; colNum<=endPosY; colNum++) {
+    for (var rowNum=startPosX; rowNum<=endPosX; rowNum++) {
+          // All the neighbors will be grid[rowNum][colNum]
+          if(cellIsAlive[(colNum+tableHeight) % tableHeight][(rowNum+tableLength) % tableLength]){
+            if(rowNum != thisPosX || colNum != thisPosY){
+              aliveCount++;
+            }
+          }
+      }
+  }
+    
+    return aliveCount;
+
+  }
 }
 
 
@@ -329,6 +355,18 @@ function updateStepInterval(range){
 
 }
 
-function updateToroidal(select){
-  isToroidal = select.value;
+function updateBorderRule(select){
+  value = select.value;
+
+  isToroidal = false;
+  bordersAlive = false;
+  bordersDead = false;
+
+  if(value == "alive"){
+    bordersAlive = true;
+  } else if (value =="dead"){
+    bordersDead = true;
+  } else if(value == "toroidal"){
+    isToroidal = true;
+  }
 }
