@@ -8,10 +8,12 @@ var lonelinessThreshold = 2;
 var overpopulation = 3;
 var gmin = 3;
 var gmax = 3;
+var isToroidal = false;
 
 var continueStepping = false;
 
-var cellIsAlive = Create2DArray(tableHeight, tableLength);
+var cellIsAlive = Create2DArray(tableHeight, tableLength, false);
+var cellForceState = Create2DArray(tableHeight, tableLength, false);
 
 
 $(document).ready(function(){
@@ -74,17 +76,18 @@ var handleCellStep = function(j, i, neighborCount){
   var changeflag = false;
   var cellAlive = cellIsAlive[j][i];
 
-  if(neighborCount < lonelinessThreshold && cellAlive){
-    changeflag = true;
-  }else if(neighborCount > overpopulation && cellAlive){
-    changeflag = true;
-  }else if(neighborCount >= gmin && neighborCount <= gmax && !cellAlive){
-    changeflag = true;
+  if(cellForceState[j][i] == false){
+    if(neighborCount < lonelinessThreshold && cellAlive){
+      changeflag = true;
+    }else if(neighborCount > overpopulation && cellAlive){
+      changeflag = true;
+    }else if(neighborCount >= gmin && neighborCount <= gmax && !cellAlive){
+      changeflag = true;
+    }
+    if(cellAlive && (neighborCount == 3 || neighborCount == 2)){
+      changeflag = false;
+    }
   }
-  if(cellAlive && (neighborCount == 3 || neighborCount == 2)){
-    changeflag = false;
-  }
-
   return changeflag;
 
 }
@@ -124,11 +127,31 @@ var countAliveNeighbors = function(j, i) {
   var MAX_X = tableLength-1;
   var MAX_Y = tableHeight-1;
 
-  var startPosX = (thisPosX - 1 < MIN_X) ? thisPosX : thisPosX-1;
-  var startPosY = (thisPosY - 1 < MIN_Y) ? thisPosY : thisPosY-1;
-  var endPosX =   (thisPosX + 1 > MAX_X) ? thisPosX : thisPosX+1;
-  var endPosY =   (thisPosY + 1 > MAX_Y) ? thisPosY : thisPosY+1;
+  var tempRadius = neighborRadius;
+  while(thisPosX - tempRadius < MIN_X){
+    tempRadius--;
+  }
+  var startPosX = thisPosX - tempRadius;
 
+  tempRadius = neighborRadius;
+  while(thisPosY - tempRadius < MIN_Y){
+    tempRadius--;
+  }
+  var startPosY = thisPosY - tempRadius;
+
+  tempRadius = neighborRadius;
+  while(thisPosX + tempRadius > MAX_X){
+    tempRadius--;
+  }
+  var endPosX = thisPosX + tempRadius;
+
+  tempRadius = neighborRadius;
+  while(thisPosY + tempRadius > MAX_Y){
+    tempRadius--;
+  }
+  var endPosY = thisPosY + tempRadius;
+
+console.log("%d, %d, %d, %d", startPosX, startPosY, endPosX, endPosY);
   var aliveCount = 0;
 for (var colNum=startPosY; colNum<=endPosY; colNum++) {
   for (var rowNum=startPosX; rowNum<=endPosX; rowNum++) {
@@ -140,20 +163,19 @@ for (var colNum=startPosY; colNum<=endPosY; colNum++) {
         }
     }
 }
-
   return aliveCount;
 
 }
 
 
 
-function Create2DArray(rows, columns) {
+function Create2DArray(rows, columns, value) {
   var arr = [];
 
   for (var j=0;j<rows;j++) {
     arr[j] = [];
      for(var i=0; i<columns; i++){
-       arr[j][i] = false;
+       arr[j][i] = value;
      }
   }
 
@@ -220,10 +242,13 @@ function resetGame(){
 }
 
 function clearTable(){
-  for(var j=0; j<tableHeight; j++){
-    for(var i=0; i<tableLength; i++){
-      var id = j+'-'+i;
-      $("#"+id).attr("class", "deadcell");
+  if(!isStepping){
+    for(var j=0; j<tableHeight; j++){
+      for(var i=0; i<tableLength; i++){
+        var id = j+'-'+i;
+        $("#"+id).attr("class", "deadcell");
+        cellIsAlive[j][i] = false;
+      }
     }
   }
 }
@@ -249,6 +274,9 @@ function resizeTable(row, column){
   tableHeight = column;
   tableLength = row;
 
+  cellIsAlive = Create2DArray(row, column, false);
+  cellForceState = Create2DArray(row, column, false);
+
   for(var j=0; j<tableHeight; j++){
     $(".celltable").append("<tr id="+"row"+j+"></tr>");
 
@@ -257,10 +285,27 @@ function resizeTable(row, column){
 
       $("#row"+j).append("<td class='deadcell' id="+id+"></td>");
 
-      $("#"+id).click(function(){
+      $("#"+id).click(function(event){
         if(!isStepping){
           var i = getRowNum(this);
           var j = getColumnNum(this);
+
+          if(event.altKey){
+            if($(this).hasClass("livecell")){
+              $(this).attr("class", "visiteddeadcell");
+            }
+            cellForceState[j][i] = true;
+            return;
+          }
+
+          if(event.shiftKey){
+            if($(this).hasClass("deadcell") || $(this).hasClass("visiteddeadcell")){
+              $(this).attr("class", "livecell");
+            }
+
+            cellForceState[j][i] = true;
+            return;
+          }
 
           if( $(this).hasClass("deadcell") || $(this).hasClass("visiteddeadcell")){
             $(this).attr("class", "livecell");
@@ -269,6 +314,8 @@ function resizeTable(row, column){
             $(this).attr("class", "visiteddeadcell");
             cellIsAlive[j][i] = false;
           }
+
+          cellForceState[j][i] = false;
         }
       });
     }
@@ -280,4 +327,8 @@ function updateStepInterval(range){
 
   steppingInterval = range.value;
 
+}
+
+function updateToroidal(select){
+  isToroidal = select.value;
 }
